@@ -18,13 +18,13 @@ my $debug         = 0;
 my $guid_hash_key = '';    # Change this if you want guids
 
 # set vars from env
-if(defined $ENV{'DEBUG'}) {
+if (defined $ENV{'DEBUG'}) {
 	$debug = $ENV{'DEBUG'};
 }
-if(defined $ENV{'GUID_HASH_KEY'}) {
+
+if (defined $ENV{'GUID_HASH_KEY'}) {
 	$guid_hash_key = $ENV{'GUID_HASH_KEY'};
 }
-
 
 my %server_list;
 my %auth_list;
@@ -120,12 +120,9 @@ sub master_server {
 		my ($port, $ipaddr) = sockaddr_in($adr);
 		my $ip = inet_ntoa($ipaddr);
 
-		if ($debug) {
-			my $host = gethostbyaddr($ipaddr, AF_INET);
-
-			unless (defined($host)) { $host = 'undefined'; }
-			print "Master Server: client $ip:$port ($host) said $msg\n";
-		}
+		my $host = gethostbyaddr($ipaddr, AF_INET);
+		unless (defined($host)) { $host = 'undefined'; }
+		print "Master Server: client $ip:$port ($host) said $msg\n";
 
 		if ($msg =~ /^\xFF\xFF\xFF\xFFgetservers\s(\d+)\s?(\w+)?\s?(\w+)?$/) {
 			&send_server_list($adr, $1);
@@ -153,17 +150,14 @@ sub auth_server {
 		my ($port, $ipaddr) = sockaddr_in($adr);
 		my $ip = inet_ntoa($ipaddr);
 
-		if ($debug) {
-			my $host = gethostbyaddr($ipaddr, AF_INET);
+		my $host = gethostbyaddr($ipaddr, AF_INET);
+		unless (defined($host)) { $host = 'undefined'; }
+		print "Authentication Server: client $ip:$port ($host) said $msg\n";
 
-			unless (defined($host)) { $host = 'undefined'; }
-			print "Authentication Server: client $ip:$port ($host) said $msg\n";
-		}
-
-		if ($msg =~ /^\xFF\xFF\xFF\xFFgetKeyAuthorize\s(\d)\s(\w+)$/) {
+		if ($msg =~ /^\xFF\xFF\xFF\xFFgetKeyAuthorize\s(\d)\s(\w+)(\sPB\s(\w+))?$/) {
 			$auth_list{$ip} = $2;
 		}
-		elsif ($msg =~ /^\xFF\xFF\xFF\xFFgetIpAuthorize\s(-?\d+)\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s(\w+)\s(\d)$/) {
+		elsif ($msg =~ /^\xFF\xFF\xFF\xFFgetIpAuthorize\s(-?\d+)\s(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\s(\w+)\s(\d)(\sPB\s(\w+))?$/) {
 			my $guid   = 0;
 			my $pbguid = 0;
 
@@ -216,8 +210,6 @@ sub add_server {
 sub get_challenge {
 	my $server = shift;
 	my $port   = shift;
-
-	srand;
 
 	my $random    = int(-1000000000 + rand(250000000));
 	my $challenge = "\xFF\xFF\xFF\xFFgetchallenge $random";
